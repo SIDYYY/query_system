@@ -57,24 +57,19 @@ export default function Dashboard() {
   const filteredRequests = requests
     .filter((req) => {
       const keyword = search.trim().toLowerCase();
-
       const idMatch = req.student_or_faculty_id
         ?.toLowerCase()
         .includes(keyword);
-
       const nameMatch = req.name?.toLowerCase().includes(keyword);
-
       return keyword === "" || idMatch || nameMatch;
     })
     .filter((req) => {
       if (!startDate && !endDate) return true;
 
       const created = new Date(req.created_at).setHours(0, 0, 0, 0);
-
       const start = startDate
         ? new Date(startDate).setHours(0, 0, 0, 0)
         : null;
-
       const end = endDate
         ? new Date(endDate).setHours(0, 0, 0, 0)
         : null;
@@ -93,16 +88,12 @@ export default function Dashboard() {
     const start = new Date(req.created_at);
     const end = new Date(req.release_date);
 
-    const diffDays = Math.ceil(
-      (end - start) / (1000 * 60 * 60 * 24)
-    );
-
+    const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
     return `${diffDays} day(s)`;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 sm:p-10 font-sans">
-
       {/* HEADER */}
       <div className="flex justify-between items-start mb-8">
         <div>
@@ -124,12 +115,9 @@ export default function Dashboard() {
 
       {/* FILTERS CARD */}
       <div className="bg-white shadow rounded-xl p-5 mb-6 text-gray-800">
-
         <div className="flex flex-col lg:flex-row gap-4 lg:items-end justify-between">
-
           {/* LEFT FILTERS */}
           <div className="flex flex-wrap gap-4 items-end">
-
             {/* SEARCH */}
             <div className="flex flex-col">
               <label className="text-xs text-gray-800 mb-1">
@@ -146,9 +134,7 @@ export default function Dashboard() {
 
             {/* START DATE */}
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">
-                Start Date
-              </label>
+              <label className="text-xs text-gray-500 mb-1">Start Date</label>
               <input
                 type="date"
                 value={startDate}
@@ -159,9 +145,7 @@ export default function Dashboard() {
 
             {/* END DATE */}
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">
-                End Date
-              </label>
+              <label className="text-xs text-gray-500 mb-1">End Date</label>
               <input
                 type="date"
                 value={endDate}
@@ -177,7 +161,6 @@ export default function Dashboard() {
             >
               Reset
             </button>
-
           </div>
 
           {/* RIGHT SIDE */}
@@ -197,14 +180,12 @@ export default function Dashboard() {
               Show Released Only
             </label>
           </div>
-
         </div>
       </div>
 
       {/* TABLE */}
       <div className="overflow-x-auto rounded-xl shadow bg-white">
         <table className="w-full text-sm text-left">
-
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
               <th className="px-4 py-3">User Type</th>
@@ -217,6 +198,7 @@ export default function Dashboard() {
               <th className="px-4 py-3">Submitted</th>
               <th className="px-4 py-3">Released</th>
               <th className="px-4 py-3">Duration</th>
+              <th className="px-4 py-3">Attachments</th>
               <th className="px-4 py-3">Release</th>
             </tr>
           </thead>
@@ -227,48 +209,81 @@ export default function Dashboard() {
                 key={req.id}
                 className="border-t hover:bg-gray-50 text-gray-900"
               >
-
-                <td className="px-4 py-3 capitalize">
-                  {req.user_type}
-                </td>
+                <td className="px-4 py-3 capitalize">{req.user_type}</td>
 
                 <td className="px-4 py-3">
                   {req.student_or_faculty_id || req.guest_name}
                 </td>
 
-                <td className="px-4 py-3">
-                  {req.section || "N/A"}
-                </td>
-
-                <td className="px-4 py-3">
-                  {req.gender || "N/A"}
-                </td>
-
-                <td className="px-4 py-3">
-                  {req.contact_no || "N/A"}
-                </td>
-
-                <td className="px-4 py-3 max-w-xs truncate">
-                  {req.concern}
-                </td>
-
+                <td className="px-4 py-3">{req.section || "N/A"}</td>
+                <td className="px-4 py-3">{req.gender || "N/A"}</td>
+                <td className="px-4 py-3">{req.contact_no || "N/A"}</td>
+                <td className="px-4 py-3 max-w-xs truncate">{req.concern}</td>
                 <td className="px-4 py-3 max-w-xs truncate text-wrap">
                   {req.description || "Not specified"}
                 </td>
-
                 <td className="px-4 py-3">
                   {new Date(req.created_at).toLocaleDateString()}
                 </td>
-
                 <td className="px-4 py-3">
                   {req.release_date
                     ? new Date(req.release_date).toLocaleDateString()
                     : "-"}
                 </td>
+                <td className="px-4 py-3">{getDuration(req)}</td>
 
-                <td className="px-4 py-3">
-                  {getDuration(req)}
-                </td>
+                {/* ATTACHMENTS */}
+<td className="px-4 py-3">
+  {req.attachment_url ? (
+    <div className="flex flex-wrap gap-2">
+      {(Array.isArray(req.attachment_url) ? req.attachment_url : [req.attachment_url]).map((file, idx) => {
+        const ext = file.split(".").pop().toLowerCase();
+        const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+        const isPDF = ext === "pdf";
+
+        if (isImage) {
+          return (
+            <img
+              key={idx}
+              src={file} // directly use URL from Supabase
+              alt={`attachment-${idx}`}
+              className="w-20 h-20 object-cover rounded-md border cursor-pointer"
+              onClick={() => window.open(file, "_blank")}
+            />
+          );
+        }
+
+        if (isPDF) {
+          return (
+            <embed
+              key={idx}
+              src={file} // directly use URL
+              type="application/pdf"
+              width="80"
+              height="80"
+              className="border rounded-md cursor-pointer"
+              onClick={() => window.open(file, "_blank")}
+            />
+          );
+        }
+
+        return (
+          <a
+            key={idx}
+            href={file}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline text-sm"
+          >
+            {file.split("/").pop()}
+          </a>
+        );
+      })}
+    </div>
+  ) : (
+    "No attachments"
+  )}
+</td>
 
                 <td className="px-4 py-3">
                   <input
@@ -278,18 +293,15 @@ export default function Dashboard() {
                     onChange={() => toggleRelease(req)}
                   />
                 </td>
-
               </tr>
             ))}
           </tbody>
-
         </table>
       </div>
 
       <p className="mt-3 text-sm text-gray-500 text-center sm:hidden">
         Swipe horizontally to see all columns
       </p>
-
     </div>
   );
 }

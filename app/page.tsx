@@ -37,7 +37,7 @@ async function verifyAdmin() {
           {/* ADMIN BUTTON */}
           <button
             onClick={() => setShowModal(true)}
-            className="rounded-xl bg-blue-800 px-8 py-6 text-white font-semibold shadow-lg hover:scale-105 transition"
+            className="rounded-xl bg-blue-800 px-8 py-6 text-white font-semibold shadow-lg hover:scale-105 transition cursor-pointer"
           >
             Admin Dashboard
           </button>
@@ -46,7 +46,7 @@ async function verifyAdmin() {
 
           <Link
             href="/student/dashboard"
-            className="rounded-xl bg-yellow-500 px-8 py-6 text-white font-semibold shadow-lg hover:scale-105 transition"
+            className="rounded-xl bg-yellow-500 px-8 py-6 text-white font-semibold shadow-lg hover:scale-105 transition cursor-pointer"
           >
             Requestants Dashboard
           </Link>
@@ -58,7 +58,7 @@ async function verifyAdmin() {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
 
-          <div className="bg-white p-8 rounded-xl shadow-xl w-80 text-center">
+          <div className="bg-white p-8 rounded-xl shadow-xl w-80 text-gray-800 text-center">
 
             <h2 className="text-xl font-bold mb-4">
               Enter Admin Password
@@ -76,14 +76,14 @@ async function verifyAdmin() {
 
               <button
                 onClick={verifyAdmin}
-                className="bg-blue-700 text-white px-4 py-2 rounded"
+                className="bg-blue-700 text-white px-4 py-2 rounded cursor-pointer"
               >
                 Enter
               </button>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-gray-300 px-4 py-2 rounded"
+                className="bg-gray-300 px-4 py-2 rounded cursor-pointer"
               >
                 Cancel
               </button>
