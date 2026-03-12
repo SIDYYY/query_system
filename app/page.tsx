@@ -1,47 +1,99 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [showModal, setShowModal] = useState(false);
+  const [password, setPassword] = useState("");
+  const router = useRouter();
+
+async function verifyAdmin() {
+  const { data } = await supabase.rpc("verify_admin_password", {
+    input_password: password,
+  });
+
+  if (data) {
+    document.cookie = "admin=true; path=/; max-age=3600"; 
+    router.push("/admin/dashboard");
+  } else {
+    alert("Incorrect password");
+  }
+}
+
   return (
-    <div className="relative min-h-screen bg-[#13136b]">
-      {/* Background Image */}
-      {/* <Image
-        src="/BG.png"
-        alt="Background"
-        fill
-        className="object-cover"
-        priority
-      /> */}
+    <div className="relative flex min-h-screen items-center justify-center bg-white p-4">
 
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-black/50"></div>
+      <div className="bg-white/70 backdrop-blur-md rounded-3xl p-10 max-w-md w-full text-center shadow-2xl border-2 border-[#fab414]">
 
-      {/* Main content */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-white/70 backdrop-blur-md rounded-3xl p-10 max-w-md w-full text-center shadow-xl">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-            Dean's Office Query System
-          </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          Dean's Office Query System
+        </h1>
 
-          <div className="flex flex-col gap-6">
-            <Link
-              href="/admin/dashboard"
-              className="rounded-xl bg-blue-800 px-8 py-6 text-white font-semibold shadow-lg transition hover:scale-105"
-            >
-              Admin Dashboard
-            </Link>
+        <div className="flex flex-col gap-6">
 
-            <span className="font-medium text-gray-800">OR</span>
+          {/* ADMIN BUTTON */}
+          <button
+            onClick={() => setShowModal(true)}
+            className="rounded-xl bg-blue-800 px-8 py-6 text-white font-semibold shadow-lg hover:scale-105 transition"
+          >
+            Admin Dashboard
+          </button>
 
-            <Link
-              href="/student/dashboard"
-              className="rounded-xl bg-yellow-500 px-8 py-6 text-white font-semibold shadow-lg transition hover:scale-105"
-            >
-              Requestants Dashboard
-            </Link>
-          </div>
+          <span className="font-medium text-gray-800">OR</span>
+
+          <Link
+            href="/student/dashboard"
+            className="rounded-xl bg-yellow-500 px-8 py-6 text-white font-semibold shadow-lg hover:scale-105 transition"
+          >
+            Requestants Dashboard
+          </Link>
+
         </div>
       </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+          <div className="bg-white p-8 rounded-xl shadow-xl w-80 text-center">
+
+            <h2 className="text-xl font-bold mb-4">
+              Enter Admin Password
+            </h2>
+
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
+
+            <div className="flex gap-3 justify-center">
+
+              <button
+                onClick={verifyAdmin}
+                className="bg-blue-700 text-white px-4 py-2 rounded"
+              >
+                Enter
+              </button>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
