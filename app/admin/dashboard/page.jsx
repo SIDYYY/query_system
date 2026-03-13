@@ -12,15 +12,49 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [showReleased, setShowReleased] = useState(false);
+  const [previewImages, setPreviewImages] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(null);
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
+  // Fetch requests
   async function fetchRequests() {
     const { data, error } = await supabase.from("requests").select("*");
-    if (error) console.error(error);
-    else setRequests(data || []);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const normalized = data.map((req) => {
+      let attachments = req.attachment_url;
+
+      // handle null
+      if (!attachments) attachments = [];
+
+      // handle JSON string
+      if (typeof attachments === "string") {
+        try {
+          attachments = JSON.parse(attachments);
+        } catch {
+          attachments = [attachments];
+        }
+      }
+
+      // ensure array
+      if (!Array.isArray(attachments)) {
+        attachments = [attachments];
+      }
+
+      // remove null values
+      attachments = attachments.filter(Boolean);
+
+      return { ...req, attachment_url: attachments };
+    });
+
+    setRequests(normalized);
   }
 
   async function toggleRelease(req) {
@@ -57,22 +91,16 @@ export default function Dashboard() {
   const filteredRequests = requests
     .filter((req) => {
       const keyword = search.trim().toLowerCase();
-      const idMatch = req.student_or_faculty_id
-        ?.toLowerCase()
-        .includes(keyword);
-      const nameMatch = req.name?.toLowerCase().includes(keyword);
+      const idMatch = req.student_or_faculty_id?.toLowerCase().includes(keyword);
+      const nameMatch = req.guest_name?.toLowerCase().includes(keyword);
       return keyword === "" || idMatch || nameMatch;
     })
     .filter((req) => {
       if (!startDate && !endDate) return true;
 
       const created = new Date(req.created_at).setHours(0, 0, 0, 0);
-      const start = startDate
-        ? new Date(startDate).setHours(0, 0, 0, 0)
-        : null;
-      const end = endDate
-        ? new Date(endDate).setHours(0, 0, 0, 0)
-        : null;
+      const start = startDate ? new Date(startDate).setHours(0, 0, 0, 0) : null;
+      const end = endDate ? new Date(endDate).setHours(0, 0, 0, 0) : null;
 
       if (start && end) return created >= start && created <= end;
       if (start) return created >= start;
@@ -84,16 +112,31 @@ export default function Dashboard() {
 
   const getDuration = (req) => {
     if (!req.release_date) return "-";
-
     const start = new Date(req.created_at);
     const end = new Date(req.release_date);
-
     const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
     return `${diffDays} day(s)`;
   };
+  function nextImage() {
+  setCurrentIndex((prev) =>
+    prev === previewImages.length - 1 ? 0 : prev + 1
+  );
+  }
+
+  function prevImage() {
+    setCurrentIndex((prev) =>
+      prev === 0 ? previewImages.length - 1 : prev - 1
+    );
+  }
+
+  function closePreview() {
+    setCurrentIndex(null);
+    setPreviewImages([]);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 sm:p-10 font-sans">
+
       {/* HEADER */}
       <div className="flex justify-between items-start mb-8">
         <div>
@@ -113,28 +156,25 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* FILTERS CARD */}
+      {/* FILTERS */}
       <div className="bg-white shadow rounded-xl p-5 mb-6 text-gray-800">
         <div className="flex flex-col lg:flex-row gap-4 lg:items-end justify-between">
-          {/* LEFT FILTERS */}
+
           <div className="flex flex-wrap gap-4 items-end">
-            {/* SEARCH */}
+
             <div className="flex flex-col">
-              <label className="text-xs text-gray-800 mb-1">
-                Search ID / Name
-              </label>
+              <label className="text-xs mb-1">Search ID / Name</label>
               <input
                 type="text"
                 placeholder="Enter keyword"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm w-48 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="border rounded-md px-3 py-2 text-sm w-48"
               />
             </div>
 
-            {/* START DATE */}
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Start Date</label>
+              <label className="text-xs mb-1">Start Date</label>
               <input
                 type="date"
                 value={startDate}
@@ -143,9 +183,8 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* END DATE */}
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">End Date</label>
+              <label className="text-xs mb-1">End Date</label>
               <input
                 type="date"
                 value={endDate}
@@ -154,24 +193,20 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* RESET */}
             <button
               onClick={resetFilters}
-              className="mt-5 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm"
+              className="mt-5 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-md text-sm"
             >
               Reset
             </button>
+
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="text-sm bg-gray-100 px-4 py-2 rounded-lg font-medium justify-center text-center">
+          <div className="text-sm bg-gray-100 px-4 py-2 rounded-lg font-medium text-center">
             Total Requests:{" "}
-            <span className="font-bold text-gray-900">
-              {filteredRequests.length}
-            </span>
+            <span className="font-bold">{filteredRequests.length}</span>
 
-            {/* RELEASED */}
-            <label className="flex items-center gap-2 text-sm mt-5">
+            <label className="flex items-center gap-2 text-sm mt-4">
               <input
                 type="checkbox"
                 checked={showReleased}
@@ -180,12 +215,13 @@ export default function Dashboard() {
               Show Released Only
             </label>
           </div>
+
         </div>
       </div>
 
       {/* TABLE */}
-      <div className="overflow-x-auto rounded-xl shadow bg-white">
-        <table className="w-full text-sm text-left">
+        <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl shadow bg-white">       
+          <table className="w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
               <th className="px-4 py-3">User Type</th>
@@ -205,16 +241,12 @@ export default function Dashboard() {
 
           <tbody>
             {filteredRequests.map((req) => (
-              <tr
-                key={req.id}
-                className="border-t hover:bg-gray-50 text-gray-900"
-              >
-                <td className="px-4 py-3 capitalize">{req.user_type}</td>
+              <tr key={req.id} className="border-t hover:bg-gray-50 text-gray-800">
 
+                <td className="px-4 py-3 capitalize">{req.user_type}</td>
                 <td className="px-4 py-3">
                   {req.student_or_faculty_id || req.guest_name}
                 </td>
-
                 <td className="px-4 py-3">{req.section || "N/A"}</td>
                 <td className="px-4 py-3">{req.gender || "N/A"}</td>
                 <td className="px-4 py-3">{req.contact_no || "N/A"}</td>
@@ -222,86 +254,136 @@ export default function Dashboard() {
                 <td className="px-4 py-3 max-w-xs truncate text-wrap">
                   {req.description || "Not specified"}
                 </td>
+
                 <td className="px-4 py-3">
                   {new Date(req.created_at).toLocaleDateString()}
                 </td>
+
                 <td className="px-4 py-3">
                   {req.release_date
                     ? new Date(req.release_date).toLocaleDateString()
                     : "-"}
                 </td>
+
                 <td className="px-4 py-3">{getDuration(req)}</td>
 
                 {/* ATTACHMENTS */}
-<td className="px-4 py-3">
-  {req.attachment_url ? (
-    <div className="flex flex-wrap gap-2">
-      {(Array.isArray(req.attachment_url) ? req.attachment_url : [req.attachment_url]).map((file, idx) => {
-        const ext = file.split(".").pop().toLowerCase();
-        const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
-        const isPDF = ext === "pdf";
-
-        if (isImage) {
-          return (
-            <img
-              key={idx}
-              src={file} // directly use URL from Supabase
-              alt={`attachment-${idx}`}
-              className="w-20 h-20 object-cover rounded-md border cursor-pointer"
-              onClick={() => window.open(file, "_blank")}
-            />
-          );
-        }
-
-        if (isPDF) {
-          return (
-            <embed
-              key={idx}
-              src={file} // directly use URL
-              type="application/pdf"
-              width="80"
-              height="80"
-              className="border rounded-md cursor-pointer"
-              onClick={() => window.open(file, "_blank")}
-            />
-          );
-        }
-
-        return (
-          <a
-            key={idx}
-            href={file}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-sm"
-          >
-            {file.split("/").pop()}
-          </a>
-        );
-      })}
-    </div>
-  ) : (
-    "No attachments"
-  )}
-</td>
-
                 <td className="px-4 py-3">
+                  {req.attachment_url.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+
+                      {req.attachment_url.map((file, idx) => {
+                        if (!file) return null;
+
+                        const ext = file.split(".").pop()?.toLowerCase();
+
+                        if (["jpg","jpeg","png","gif","webp"].includes(ext)) {
+                          return (
+                            <img
+                              key={idx}
+                              src={file}
+                              className="w-20 h-20 object-cover rounded-md border cursor-pointer hover:scale-105 transition"
+                              onClick={() => {
+                                setPreviewImages(req.attachment_url);
+                                setCurrentIndex(idx);
+                              }}
+                            />
+                          );
+                        }
+
+                        if (ext === "pdf") {
+                          return (
+                            <embed
+                              key={idx}
+                              src={file}
+                              type="application/pdf"
+                              width="80"
+                              height="80"
+                              className="border rounded-md cursor-pointer"
+                              onClick={() => window.open(file, "_blank")}
+                            />
+                          );
+                        }
+
+                        return (
+                          <a
+                            key={idx}
+                            href={file}
+                            target="_blank"
+                            className="text-blue-600 underline"
+                          >
+                            {file.split("/").pop()}
+                          </a>
+                        );
+                      })}
+
+                    </div>
+                  ) : (
+                    "No attachments"
+                  )}
+                </td>
+
+                <td className="px-4 py-3 check:bg-green-800">
                   <input
                     type="checkbox"
-                    checked={req.status === "Released"}
+                    checked={ req.status === "Released"}
                     disabled={req.status === "Released"}
                     onChange={() => toggleRelease(req)}
+                        className="w-5 h-5"
                   />
                 </td>
+
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
 
       <p className="mt-3 text-sm text-gray-500 text-center sm:hidden">
         Swipe horizontally to see all columns
       </p>
+
+      {currentIndex !== null && (
+  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+
+    {/* Close */}
+    <button
+      onClick={closePreview}
+      className="absolute top-5 right-8 text-white text-3xl font-bold"
+    >
+      ✕
+    </button>
+
+    {/* Previous */}
+    {previewImages.length > 1 && (
+      <button
+        onClick={prevImage}
+        className="absolute left-5 text-white text-4xl font-bold"
+      >
+        ‹
+      </button>
+    )}
+
+    {/* Image */}
+    <img
+      src={previewImages[currentIndex]}
+      className="max-h-[85vh] max-w-[90vw] object-contain rounded-lg"
+    />
+
+    {/* Next */}
+    {previewImages.length > 1 && (
+      <button
+        onClick={nextImage}
+        className="absolute right-5 text-white text-4xl font-bold"
+      >
+        ›
+      </button>
+    )}
+
+  </div>
+)}
+
     </div>
   );
 }
