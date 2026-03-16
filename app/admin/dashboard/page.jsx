@@ -14,6 +14,11 @@ export default function Dashboard() {
   const [showReleased, setShowReleased] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(null);
+  const [surveyModal, setSurveyModal] = useState(false);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
+  const [allSurveys, setAllSurveys] = useState([]);
+  const [surveySummaryModal, setSurveySummaryModal] = useState(false);
+  const [avgRating, setAvgRating] = useState(0);
 
   useEffect(() => {
     fetchRequests();
@@ -21,7 +26,16 @@ export default function Dashboard() {
 
   // Fetch requests
   async function fetchRequests() {
-    const { data, error } = await supabase.from("requests").select("*");
+    const { data, error } = await supabase
+      .from("requests")
+      .select(`
+        *,
+        satisfaction_surveys (
+          rating,
+          note,
+          created_at
+        )
+      `);
 
     if (error) {
       console.error(error);
@@ -55,6 +69,46 @@ export default function Dashboard() {
     });
 
     setRequests(normalized);
+  }
+
+  async function fetchAllSurveys() {
+
+      const { data, error } = await supabase
+        .from("satisfaction_surveys")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setAllSurveys(data);
+
+      // compute average
+      if (data.length > 0) {
+        const total = data.reduce((sum, s) => sum + s.rating, 0);
+        setAvgRating((total / data.length).toFixed(1));
+      }
+    }
+
+  function openSurvey(req) {
+  setSelectedSurvey(req);
+  setSurveyModal(true);
+  }
+
+  function closeSurvey() {
+    setSurveyModal(false);
+    setSelectedSurvey(null);
+  }
+
+  function openSurveySummary() {
+  fetchAllSurveys();
+  setSurveySummaryModal(true);
+  }
+
+  function closeSurveySummary() {
+    setSurveySummaryModal(false);
   }
 
   async function toggleRelease(req) {
@@ -138,22 +192,27 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50 p-6 sm:p-10 font-sans">
 
       {/* HEADER */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Dean's Office Requests
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Manage and release submitted requests
-          </p>
-        </div>
+      <div className="flex justify-between">
+      <div className="gap-3 mb-8">
 
+      <div className="">
+      <h1 className="text-gray-800 text-4xl font-bold mb-5"> Dean's System Query v1</h1>
+      <button
+        onClick={openSurveySummary}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium"
+      >
+        View Satisfaction Surveys
+      </button>
+      </div>
+      </div>
+      <div>
         <button
-          onClick={logout}
-          className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg shadow-sm text-sm font-medium"
-        >
-          Logout
-        </button>
+        onClick={logout}
+        className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium"
+      >
+        Logout
+      </button>
+      </div>
       </div>
 
       {/* FILTERS */}
@@ -220,7 +279,7 @@ export default function Dashboard() {
       </div>
 
       {/* TABLE */}
-        <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl shadow bg-white">       
+        <div className="overflow-x-auto overflow-y-auto max-h-150 rounded-xl shadow bg-white">       
           <table className="w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
@@ -237,7 +296,7 @@ export default function Dashboard() {
               <th className="px-4 py-3">Duration</th>
               <th className="px-4 py-3">Attachments</th>
               <th className="px-4 py-3">Release</th>
-              <th className="px-4 py-3">Satisfaction</th>
+              {/* <th className="px-4 py-3">Satisfaction</th> */}
             </tr>
           </thead>
 
@@ -264,7 +323,7 @@ export default function Dashboard() {
                 <td className="px-4 py-3">
                   {req.release_date
                     ? new Date(req.release_date).toLocaleDateString()
-                    : "-"}
+                    : "Not yet"}
                 </td>
 
                 <td className="px-4 py-3">{getDuration(req)}</td>
@@ -335,9 +394,18 @@ export default function Dashboard() {
                   />
                 </td>
 
-                <td className="px-4 py-3">
-                  {req.satisfaction_rating ?? "-"}
-                </td>
+                {/* <td className="px-4 py-3">
+                  {req.satisfaction_surveys?.length > 0 ? (
+                    <button
+                      onClick={() => openSurvey(req)}
+                      className="text-blue-600 underline font-medium"
+                    >
+                      View Survey
+                    </button>
+                  ) : (
+                    "-"
+                  )}
+                </td> */}
 
               </tr>
             ))}
@@ -387,6 +455,116 @@ export default function Dashboard() {
       </button>
     )}
 
+  </div>
+)}
+{/* SATISFACTION SURVEY MODAL */}
+{/* {surveyModal && selectedSurvey && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 text-gray-800">
+
+    <div className="bg-white rounded-xl shadow-xl w-105 p-6 relative"> */}
+
+      {/* CLOSE */}
+      {/* <button
+        onClick={closeSurvey}
+        className="absolute top-3 right-4 text-gray-500 text-xl"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-xl font-bold text-gray-900 mb-4">
+        Satisfaction Survey
+      </h2>
+
+      <div className="space-y-3 text-gray-800">
+
+        <p>
+          <span className="font-semibold">Request ID:</span>{" "}
+          {selectedSurvey.request_id}
+        </p>
+
+        <p>
+          <span className="font-semibold">Rating:</span>{" "}
+          {"⭐".repeat(selectedSurvey.satisfaction_surveys[0].rating || 0)}
+        </p>
+
+        <p>
+          <span className="font-semibold">Notes:</span>{" "}
+          {selectedSurvey.satisfaction_surveys[0].note || "No feedback provided"}
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+)
+
+} */}
+{surveySummaryModal && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 text-gray-800">
+
+    <div className="bg-white rounded-xl shadow-xl w-[800px] max-h-[85vh] overflow-y-auto p-6 relative">
+
+      <button
+        onClick={closeSurveySummary}
+        className="absolute top-3 right-4 text-gray-500 text-xl"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-2xl font-bold mb-4">
+        Satisfaction Survey Summary
+      </h2>
+
+      <div className="mb-4 space-y-2">
+        <p>
+          <span className="font-semibold">Total Surveys:</span>{" "}
+          {allSurveys.length}
+        </p>
+
+        <p>
+          <span className="font-semibold">Average Rating:</span>{" "}
+          {"⭐".repeat(Math.round(avgRating))} ({avgRating})
+        </p>
+      </div>
+
+      <table className="w-full text-sm border">
+        <thead className="bg-gray-100 text-gray-600">
+          <tr>
+            <th className="p-2 border">Request ID</th>
+            <th className="p-2 border">Rating</th>
+            <th className="p-2 border">Note</th>
+            <th className="p-2 border">Date</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {allSurveys.map((survey) => (
+            <tr key={survey.id} className="border-t">
+
+              <td className="p-2 border">
+                {survey.request_id}
+              </td>
+
+              <td className="p-2 border">
+                {"⭐".repeat(survey.rating)}
+              </td>
+
+              <td className="p-2 border">
+                {survey.note || "-"}
+              </td>
+
+              <td className="p-2 border">
+                {new Date(survey.created_at).toLocaleDateString()}
+              </td>
+
+            </tr>
+          ))}
+        </tbody>
+
+      </table>
+
+    </div>
   </div>
 )}
 

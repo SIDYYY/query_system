@@ -57,7 +57,7 @@ export default function SatisfactionSurvey({ requestId, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md space-y-4">
+      <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md space-y-4 text-gray-800">
 
         <h2 className="text-xl font-bold text-center">
           Satisfaction Survey
