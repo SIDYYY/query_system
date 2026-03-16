@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import Swal from "sweetalert2";
 
 const CONCERNS = [
   "Clearance",
@@ -27,7 +28,7 @@ export default function Home() {
     email: "",
   });
 
-  const [attachments, setAttachments] = useState([]); // array of files/photos
+  const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -35,96 +36,106 @@ export default function Home() {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle camera photo
   const handleCamera = (e) => {
     if (e.target.files && e.target.files[0]) {
       setAttachments([...attachments, e.target.files[0]]);
     }
   };
 
-  // Handle gallery selection (multiple files)
   const handleGallery = (e) => {
     if (e.target.files) {
       setAttachments([...attachments, ...Array.from(e.target.files)]);
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const attachmentUrls = [];
+    try {
+      // 1️⃣ Get last request number from Supabase
+      const { data: lastRequest } = await supabase
+        .from("requests")
+        .select("request_number")
+        .order("request_number", { ascending: false })
+        .limit(1)
+        .single();
 
-    for (const file of attachments) {
-      if (!file) continue;
+      const nextRequestNumber = lastRequest ? lastRequest.request_number + 1 : 1;
+      const requestId = `RQST${nextRequestNumber}`;
 
-      const fileExt = file.name ? file.name.split(".").pop() : "jpg";
-      const timestamp = Date.now();
-      const safeName = file.name ? file.name.replace(/\s/g, "_") : "photo.jpg";
+      // 2️⃣ Upload attachments
+      const attachmentUrls = [];
+      for (const file of attachments) {
+        if (!file) continue;
+        const timestamp = Date.now();
+        const safeName = file.name ? file.name.replace(/\s/g, "_") : "photo.jpg";
+        const fileName = `attachments/${timestamp}-${safeName}`;
 
-      const fileName = `attachments/${timestamp}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from("attachments")
+          .upload(fileName, file, { cacheControl: "3600", upsert: false });
 
-      // Upload to Supabase
-      const { data, error: uploadError } = await supabase.storage
-        .from("attachments")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false, // if file exists, fail
-        });
+        if (uploadError) throw uploadError;
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
+        const { data: publicData } = supabase.storage
+          .from("attachments")
+          .getPublicUrl(fileName);
+
+        attachmentUrls.push(publicData.publicUrl);
       }
 
-      const { data: publicData } = supabase.storage
-        .from("attachments")
-        .getPublicUrl(fileName);
+      // 3️⃣ Insert new request
+      const { error: insertError } = await supabase.from("requests").insert([
+        {
+          request_number: nextRequestNumber,
+          request_id: requestId,
+          user_type: userType,
+          guest_name: userType === "guest" ? formData.guest_name : null,
+          gender: formData.gender,
+          student_or_faculty_id: userType !== "guest" ? formData.id : null,
+          contact_no: userType !== "guest" ? formData.contact_no : null,
+          section: userType === "student" ? formData.section : null,
+          concern: formData.concern,
+          description: formData.description,
+          email: formData.email,
+          attachment_url: attachmentUrls,
+        },
+      ]);
 
-      attachmentUrls.push(publicData.publicUrl);
+      if (insertError) throw insertError;
+
+      Swal.fire({
+        icon: "success",
+        title: `Submitted!`,
+        text: `Your request has been successfully submitted with ID: ${requestId}`,
+        confirmButtonColor: "#2563eb",
+      });
+
+      // Reset form
+      setFormData({
+        guest_name: "",
+        gender: "",
+        id: "",
+        contact_no: "",
+        section: "",
+        concern: CONCERNS[0],
+        description: "",
+        email: "",
+      });
+      setAttachments([]);
+    } catch (error) {
+      console.error("Submit failed:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Failed to submit request. Check console for details.",
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // Insert into database
-    const { error } = await supabase.from("requests").insert([
-      {
-        user_type: userType,
-        guest_name: userType === "guest" ? formData.guest_name : null,
-        gender: formData.gender,
-        student_or_faculty_id: userType !== "guest" ? formData.id : null,
-        contact_no: userType !== "guest" ? formData.contact_no : null,
-        section: userType === "student" ? formData.section : null,
-        concern: formData.concern,
-        description: formData.description,
-        email: formData.email,
-        attachment_url: attachmentUrls, // if your column is json, store array
-      },
-    ]);
-
-    if (error) {
-      console.error("DB insert error:", error);
-      throw error;
-    }
-
-    alert("Request submitted successfully!");
-    setFormData({
-      guest_name: "",
-      gender: "",
-      id: "",
-      contact_no: "",
-      section: "",
-      concern: CONCERNS[0],
-      description: "",
-      email: "",
-    });
-    setAttachments([]);
-  } catch (error) {
-    console.error("Submit failed:", error);
-    alert("Failed to submit request. Check console for details.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center font-sans bg-gray-100 p-4">

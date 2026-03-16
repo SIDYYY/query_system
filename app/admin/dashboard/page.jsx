@@ -224,6 +224,7 @@ export default function Dashboard() {
           <table className="w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
+              <th className="px-4 py-3">Request ID</th>
               <th className="px-4 py-3">User Type</th>
               <th className="px-4 py-3">ID / Guest Name</th>
               <th className="px-4 py-3">Section</th>
@@ -242,7 +243,7 @@ export default function Dashboard() {
           <tbody>
             {filteredRequests.map((req) => (
               <tr key={req.id} className="border-t hover:bg-gray-50 text-gray-800">
-
+                <td className="px-4 py-3 capitalize">{req.request_id}</td>
                 <td className="px-4 py-3 capitalize">{req.user_type}</td>
                 <td className="px-4 py-3">
                   {req.student_or_faculty_id || req.guest_name}
