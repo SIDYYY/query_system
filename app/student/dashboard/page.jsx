@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
+import SatisfactionSurvey from "@/component/satisfactionSurvey";
 
 const CONCERNS = [
   "Clearance",
@@ -33,6 +34,8 @@ export default function Home() {
 
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [currentRequestId, setCurrentRequestId] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -120,12 +123,14 @@ export default function Home() {
 
       if (insertError) throw insertError;
 
-      Swal.fire({
+      await Swal.fire({
         icon: "success",
         title: `Submitted!`,
         text: `Your request has been successfully submitted with ID: ${requestId}`,
-        confirmButtonColor: "#2563eb",
       });
+
+      setCurrentRequestId(requestId);
+      setShowSurvey(true);
 
       // Reset form
       setFormData({
@@ -248,7 +253,7 @@ export default function Home() {
         />
 
         {/* Camera Input */}
-        <div>
+        {/* <div>
           <label className="block mb-1 font-medium text-gray-800">
             Take Photo (Camera)
           </label>
@@ -260,7 +265,7 @@ export default function Home() {
             onChange={handleCamera}
             className="w-full text-gray-700"
           />
-        </div>
+        </div> */}
 
         {/* Gallery Input */}
         <div>
@@ -308,12 +313,6 @@ export default function Home() {
           type="email"
         />
 
-        {/* Satisfaction Rating */}
-        <StarRating
-          label="Satisfaction Rating"
-          value={formData.rating}
-          onChange={(star) => setFormData({ ...formData, rating: star })}
-        />
 
         <button
           type="submit"
@@ -323,6 +322,13 @@ export default function Home() {
           {loading ? "Submitting..." : "Submit"}
         </button>
       </form>
+
+      {showSurvey && (
+  <SatisfactionSurvey
+    requestId={currentRequestId}
+    onClose={() => setShowSurvey(false)}
+  />
+)}
     </div>
   );
 }
