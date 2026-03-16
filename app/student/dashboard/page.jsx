@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
 
@@ -16,6 +16,8 @@ const CONCERNS = [
 ];
 
 export default function Home() {
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const [userType, setUserType] = useState("student");
   const [formData, setFormData] = useState({
     guest_name: "",
@@ -26,6 +28,7 @@ export default function Home() {
     concern: CONCERNS[0],
     description: "",
     email: "",
+    rating: 0,
   });
 
   const [attachments, setAttachments] = useState([]);
@@ -40,11 +43,23 @@ export default function Home() {
     if (e.target.files && e.target.files[0]) {
       setAttachments([...attachments, e.target.files[0]]);
     }
+    e.target.value = "";
   };
 
   const handleGallery = (e) => {
     if (e.target.files) {
       setAttachments([...attachments, ...Array.from(e.target.files)]);
+    }
+    e.target.value = "";
+  };
+
+  const removeAttachment = (indexToRemove) => {
+    setAttachments((prev) => prev.filter((_, index) => index !== indexToRemove));
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = "";
     }
   };
 
@@ -238,6 +253,7 @@ export default function Home() {
             Take Photo (Camera)
           </label>
           <input
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
@@ -252,6 +268,7 @@ export default function Home() {
             Add from Gallery
           </label>
           <input
+            ref={galleryInputRef}
             type="file"
             accept="image/*"
             multiple
@@ -264,12 +281,21 @@ export default function Home() {
         {attachments.length > 0 && (
           <div className="flex gap-2 flex-wrap mt-2">
             {attachments.map((file, index) => (
-              <img
-                key={index}
-                src={URL.createObjectURL(file)}
-                alt="preview"
-                className="w-20 h-20 object-cover rounded"
-              />
+              <div key={`${file.name}-${index}`} className="relative">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="preview"
+                  className="w-20 h-20 object-cover rounded"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(index)}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-sm leading-none flex items-center justify-center"
+                  aria-label="Remove attachment"
+                >
+                  ×
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -280,6 +306,13 @@ export default function Home() {
           value={formData.email}
           onChange={handleChange}
           type="email"
+        />
+
+        {/* Satisfaction Rating */}
+        <StarRating
+          label="Satisfaction Rating"
+          value={formData.rating}
+          onChange={(star) => setFormData({ ...formData, rating: star })}
         />
 
         <button
@@ -324,6 +357,34 @@ function Textarea({ label, name, value, onChange }) {
         required
         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
       />
+    </div>
+  );
+}
+
+/* Star Rating */
+function StarRating({ label, value, onChange }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div>
+      <label className="block mb-1 font-medium text-gray-800">{label}</label>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            className="text-3xl leading-none focus:outline-none transition-colors"
+            style={{
+              color: star <= (hovered || value) ? "#FBBF24" : "#D1D5DB",
+            }}
+            aria-label={`${star} star`}
+          >
+            &#9733;
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

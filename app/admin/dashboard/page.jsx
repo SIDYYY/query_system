@@ -237,6 +237,7 @@ export default function Dashboard() {
               <th className="px-4 py-3">Duration</th>
               <th className="px-4 py-3">Attachments</th>
               <th className="px-4 py-3">Release</th>
+              <th className="px-4 py-3">Satisfaction</th>
             </tr>
           </thead>
 
@@ -332,6 +333,10 @@ export default function Dashboard() {
                     onChange={() => toggleRelease(req)}
                         className="w-5 h-5"
                   />
+                </td>
+
+                <td className="px-4 py-3">
+                  {req.satisfaction_rating ?? "-"}
                 </td>
 
               </tr>
