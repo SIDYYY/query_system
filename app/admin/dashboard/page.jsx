@@ -516,7 +516,7 @@ export default function Dashboard() {
         Satisfaction Survey Summary
       </h2>
 
-      <div className="mb-4 space-y-2">
+      <div className="mb-4 space-y-2 bg-blue-900 p-2 rounded-lg text-white pl-5">
         <p>
           <span className="font-semibold">Total Surveys:</span>{" "}
           {allSurveys.length}
@@ -528,6 +528,7 @@ export default function Dashboard() {
         </p>
       </div>
 
+    <div className="overflow-x-auto overflow-y-auto max-h-50">       
       <table className="w-full text-sm border">
         <thead className="bg-gray-100 text-gray-600">
           <tr>
@@ -563,6 +564,7 @@ export default function Dashboard() {
         </tbody>
 
       </table>
+    </div>
 
     </div>
   </div>

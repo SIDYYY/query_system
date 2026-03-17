@@ -80,7 +80,7 @@ export default function Home() {
         .single();
 
       const nextRequestNumber = lastRequest ? lastRequest.request_number + 1 : 1;
-      const requestId = `RQST${nextRequestNumber}`;
+      const requestId = `rqst${nextRequestNumber}`;
 
       // 2️⃣ Upload attachments
       const attachmentUrls = [];
@@ -123,10 +123,10 @@ export default function Home() {
 
       if (insertError) throw insertError;
 
-      await Swal.fire({
+      Swal.fire({
         icon: "success",
-        title: `Submitted!`,
-        text: `Your request has been successfully submitted with ID: ${requestId}`,
+        title: "Request Submitted",
+        html: `Your request has been successfully submitted.<br>ID: ${requestId}`,
       });
 
       setCurrentRequestId(requestId);
