@@ -325,10 +325,9 @@ export default function Home() {
 
       {showSurvey && (
   <SatisfactionSurvey
-    requestId={currentRequestId}
     onClose={() => setShowSurvey(false)}
-  />
-)}
+      />
+    )}
     </div>
   );
 }

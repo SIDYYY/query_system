@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Swal from "sweetalert2";
 
-export default function SatisfactionSurvey({ requestId, onClose }) {
+export default function SatisfactionSurvey({ onClose }) {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [note, setNote] = useState("");
@@ -22,16 +22,14 @@ export default function SatisfactionSurvey({ requestId, onClose }) {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("satisfaction_surveys")
-        .insert([
-          {
-            request_id: requestId,
-            rating: rating,
-            note: note,
-          },
-        ]);
-
+      const { error } = await 
+      supabase.from("satisfaction_surveys")
+      .insert([
+        {
+          rating: rating,
+          note: note,
+        },
+      ]);
       if (error) throw error;
 
       Swal.fire({

@@ -29,12 +29,7 @@ export default function Dashboard() {
     const { data, error } = await supabase
       .from("requests")
       .select(`
-        *,
-        satisfaction_surveys (
-          rating,
-          note,
-          created_at
-        )
+        *
       `);
 
     if (error) {
@@ -72,6 +67,14 @@ export default function Dashboard() {
   }
 
   async function fetchAllSurveys() {
+
+    const { data: requests } = await supabase
+    .from("requests")
+    .select("*");
+
+  const { data: surveys } = await supabase
+    .from("satisfaction_surveys")
+    .select("*");
 
       const { data, error } = await supabase
         .from("satisfaction_surveys")
@@ -503,7 +506,7 @@ export default function Dashboard() {
 {surveySummaryModal && (
   <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 text-gray-800">
 
-    <div className="bg-white rounded-xl shadow-xl w-[800px] max-h-[85vh] overflow-y-auto p-6 relative">
+    <div className="bg-white rounded-xl shadow-xl w-200 max-h-[85vh] overflow-y-auto p-6 relative">
 
       <button
         onClick={closeSurveySummary}
@@ -532,7 +535,6 @@ export default function Dashboard() {
       <table className="w-full text-sm border">
         <thead className="bg-gray-100 text-gray-600">
           <tr>
-            <th className="p-2 border">Request ID</th>
             <th className="p-2 border">Rating</th>
             <th className="p-2 border">Note</th>
             <th className="p-2 border">Date</th>
@@ -542,10 +544,6 @@ export default function Dashboard() {
         <tbody>
           {allSurveys.map((survey) => (
             <tr key={survey.id} className="border-t">
-
-              <td className="p-2 border">
-                {survey.request_id}
-              </td>
 
               <td className="p-2 border">
                 {"⭐".repeat(survey.rating)}
