@@ -19,10 +19,83 @@ export default function Dashboard() {
   const [allSurveys, setAllSurveys] = useState([]);
   const [surveySummaryModal, setSurveySummaryModal] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
+  const [reportSummary, setReportSummary] = useState("");
+  const [ratingBreakdown, setRatingBreakdown] = useState({});
 
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  function generateSurveyReport() {
+  if (!allSurveys.length) return;
+
+  // Rating breakdown
+  const breakdown = {
+    5: 0,
+    4: 0,
+    3: 0,
+    2: 0,
+    1: 0,
+  };
+
+  let positive = 0;
+  let negative = 0;
+
+  allSurveys.forEach((s) => {
+    breakdown[s.rating]++;
+
+    if (s.rating >= 4) positive++;
+    if (s.rating <= 2) negative++;
+  });
+
+  setRatingBreakdown(breakdown);
+
+  // Smart summary
+  const total = allSurveys.length;
+  const avg = avgRating;
+
+  let summary = `Survey Report Summary:\n\n`;
+  summary += `Total Responses: ${total}\n`;
+  summary += `Average Rating: ${avg}\n\n`;
+
+  if (avg >= 4) {
+    summary += `Overall, users are highly satisfied with the service.\n`;
+  } else if (avg >= 3) {
+    summary += `Users are moderately satisfied but improvements are needed.\n`;
+  } else {
+    summary += `User satisfaction is low and requires immediate attention.\n`;
+  }
+
+  summary += `\nPositive Feedback: ${positive}\n`;
+  summary += `Negative Feedback: ${negative}\n`;
+
+  // detect common issue words
+  const combinedNotes = allSurveys.map(s => s.note || "").join(" ").toLowerCase();
+
+  if (combinedNotes.includes("slow") || combinedNotes.includes("delay")) {
+    summary += `\n⚠ Common Issue: Delay/Slow processing mentioned.\n`;
+  }
+
+  if (combinedNotes.includes("good") || combinedNotes.includes("fast")) {
+    summary += `\n✅ Strength: Fast or good service mentioned.\n`;
+  }
+
+  setReportSummary(summary);
+}
+
+function downloadReport() {
+  if (!reportSummary) return;
+
+  const blob = new Blob([reportSummary], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "survey_report.txt";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 
   // Fetch requests
   async function fetchRequests() {
@@ -563,10 +636,46 @@ export default function Dashboard() {
 
       </table>
     </div>
+    <div className="flex gap-3 mt-5">
 
+      <button
+        onClick={generateSurveyReport}
+        className="shadow-xl p-2 border-2 rounded-2xl bg-green-600 text-white hover:bg-green-700"
+      >
+        Generate Survey Report
+      </button>
+
+      <button
+        onClick={downloadReport}
+        className="shadow-xl p-2 border-2 rounded-2xl bg-blue-600 text-white hover:bg-blue-700"
+      >
+        Download Report
+      </button>
     </div>
+          {reportSummary && (
+  <div className="mt-6 bg-gray-100 p-4 rounded-lg whitespace-pre-line">
+
+    <h3 className="font-bold mb-2">Report Summary</h3>
+    <p>{reportSummary}</p>
+
+    <h3 className="font-bold mt-4 mb-2">Rating Breakdown</h3>
+    <ul>
+      {Object.entries(ratingBreakdown).map(([star, count]) => (
+        <li key={star}>
+          {"⭐".repeat(star)} : {count}
+        </li>
+      ))}
+    </ul>
+
   </div>
 )}
+    </div>
+  </div>
+
+  
+)}
+
+
 
     </div>
   );
