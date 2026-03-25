@@ -365,6 +365,7 @@ function downloadReport() {
               <th className="px-4 py-3">Section</th>
               <th className="px-4 py-3">Gender</th>
               <th className="px-4 py-3">Contact</th>
+              <th className="px-4 py-3">Gmail</th>
               <th className="px-4 py-3">Concern</th>
               <th className="px-4 py-3">Description</th>
               <th className="px-4 py-3">Submitted</th>
@@ -387,6 +388,7 @@ function downloadReport() {
                 <td className="px-4 py-3">{req.section || "N/A"}</td>
                 <td className="px-4 py-3">{req.gender || "N/A"}</td>
                 <td className="px-4 py-3">{req.contact_no || "N/A"}</td>
+                <td className="px-4 py-3">{req.email || "N/A"}</td>
                 <td className="px-4 py-3 max-w-xs truncate">{req.concern}</td>
                 <td className="px-4 py-3 max-w-xs truncate text-wrap">
                   {req.description || "Not specified"}
