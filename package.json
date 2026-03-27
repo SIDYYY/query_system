@@ -9,15 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@sendinblue/client": "^3.3.1",
     "@supabase/supabase-js": "^2.99.1",
     "framer-motion": "^12.36.0",
     "next": "16.1.6",
+    "nodemailer": "^8.0.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sweetalert2": "^11.26.22"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/next": "^8.0.7",
     "@types/node": "^20.19.37",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
