@@ -14,8 +14,6 @@ export async function POST(req) {
         <p>Best regards,</p>
         <p><strong>Dean's Office</strong></p>
 
-        <hr/>
-        <small>This is an automated response. Please do not reply.</small>
       </div>
     `;
 
