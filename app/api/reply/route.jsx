@@ -31,7 +31,7 @@ export async function POST(req) {
           email: process.env.VERIFIED_EMAIL,
         },
         to: [{ email }],
-        subject: "Response to your query",
+        subject: "Dean’s Query System: Submission Update",
         htmlContent: htmlTemplate,
       }),
     });
