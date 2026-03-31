@@ -12,7 +12,7 @@ export async function POST(req) {
         <br/>
 
         <p>Best regards,</p>
-        <p><strong>Dean's Office</strong></p>
+        <p><strong>CITC Dean's Office</strong></p>
 
         <hr/>
         <small>This is an automated response. Please do not reply.</small>
