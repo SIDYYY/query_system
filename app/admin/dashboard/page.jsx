@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [showReleased, setShowReleased] = useState(false);
+  const [showPending, setUnShowReleased] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(null);
   const [surveyModal, setSurveyModal] = useState(false);
@@ -271,6 +272,7 @@ function downloadReport() {
     setStartDate("");
     setEndDate("");
     setShowReleased(false);
+    setUnShowReleased(false);
   }
 
   function logout() {
@@ -298,7 +300,12 @@ function downloadReport() {
 
       return true;
     })
-    .filter((req) => (showReleased ? req.status === "Released" : true));
+    .filter((req) => {
+      if (showReleased && showPending) return req.status === "Released" || req.status === "Pending";
+      if (showReleased) return req.status === "Released";
+      if (showPending) return req.status === "Pending";
+      return true; // if neither is checked, show all
+    });
 
   const getDuration = (req) => {
     if (!req.release_date) return "-";
@@ -408,6 +415,14 @@ function downloadReport() {
                 onChange={(e) => setShowReleased(e.target.checked)}
               />
               Show Released Only
+            </label>
+            <label className="flex items-center gap-2 text-sm mt-4">
+              <input
+                type="checkbox"
+                checked={showPending}
+                onChange={(e) => setUnShowReleased(e.target.checked)}
+              />
+              Show Pending Only
             </label>
           </div>
 
