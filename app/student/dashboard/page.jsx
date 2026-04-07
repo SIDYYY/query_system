@@ -39,9 +39,17 @@ export default function Home() {
   const [currentRequestId, setCurrentRequestId] = useState(null);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  const { name, value } = e.target;
+
+  let updatedData = { ...formData, [name]: value };
+
+  // ✅ Reset date if not consultation
+  if (name === "concern" && value !== "Consultation") {
+    updatedData.consultationDate = "";
+  }
+
+  setFormData(updatedData);
+};
 
   const handleCamera = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -67,103 +75,112 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    if (formData.concern === "Consultation" && !formData.consultationDate) {
-      alert("Please select a consultation date.");
-      return;
-}
+  // ✅ Manual validation
+  if (formData.concern === "Consultation" && !formData.consultationDate) {
+    setLoading(false);
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Date",
+      text: "Please select a consultation date.",
+    });
+    return;
+  }
 
-    try {
-      // 1️⃣ Get last request number from Supabase
-      const { data: lastRequest } = await supabase
-        .from("requests")
-        .select("request_number")
-        .order("request_number", { ascending: false })
-        .limit(1)
-        .single();
+  try {
+    const { data: lastRequest } = await supabase
+      .from("requests")
+      .select("request_number")
+      .order("request_number", { ascending: false })
+      .limit(1)
+      .single();
 
-      const nextRequestNumber = lastRequest ? lastRequest.request_number + 1 : 1;
-      const requestId = `rqst${nextRequestNumber}`;
+    const nextRequestNumber = lastRequest ? lastRequest.request_number + 1 : 1;
+    const requestId = `rqst${nextRequestNumber}`;
 
-      // 2️⃣ Upload attachments
-      const attachmentUrls = [];
-      for (const file of attachments) {
-        if (!file) continue;
-        const timestamp = Date.now();
-        const safeName = file.name ? file.name.replace(/\s/g, "_") : "photo.jpg";
-        const fileName = `attachments/${timestamp}-${safeName}`;
+    // Upload files
+    const attachmentUrls = [];
+    for (const file of attachments) {
+      if (!file) continue;
 
-        const { error: uploadError } = await supabase.storage
-          .from("attachments")
-          .upload(fileName, file, { cacheControl: "3600", upsert: false });
+      const fileName = `attachments/${Date.now()}-${file.name.replace(/\s/g, "_")}`;
 
-        if (uploadError) throw uploadError;
+      const { error } = await supabase.storage
+        .from("attachments")
+        .upload(fileName, file);
 
-        const { data: publicData } = supabase.storage
-          .from("attachments")
-          .getPublicUrl(fileName);
+      if (error) throw error;
 
-        attachmentUrls.push(publicData.publicUrl);
-      }
+      const { data } = supabase.storage
+        .from("attachments")
+        .getPublicUrl(fileName);
 
-      // 3️⃣ Insert new request
-      const { error: insertError } = await supabase.from("requests").insert([
-        {
-          request_number: nextRequestNumber,
-          request_id: requestId,
-          user_type: userType,
-          guest_name: userType === "guest" ? formData.guest_name : null,
-          gender: formData.gender,
-          student_or_faculty_id: userType !== "guest" ? formData.id : null,
-          contact_no: userType !== "guest" ? formData.contact_no : null,
-          section: userType === "student" ? formData.section : null,
-          concern: formData.concern,
-          description: formData.description,
-          email: formData.email,
-          attachment_url: attachmentUrls,
-          consultation_date : formData.consultationDate,
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      Swal.fire({
-        icon: "success",
-        title: "Request Submitted",
-        html: `Your request has been successfully submitted.<br>ID: ${requestId}`,
-      });
-
-      setCurrentRequestId(requestId);
-      setShowSurvey(true);
-
-      // Reset form
-      setFormData({
-        guest_name: "",
-        gender: "",
-        id: "",
-        contact_no: "",
-        section: "",
-        concern: CONCERNS[0],
-        description: "",
-        email: "",
-        consultationDate: "",
-      });
-      setAttachments([]);
-    } catch (error) {
-      console.error("Submit failed:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Failed to submit request. Check console for details.",
-        confirmButtonColor: "#dc2626",
-      });
-    } finally {
-      setLoading(false);
+      attachmentUrls.push(data.publicUrl);
     }
-  };
+
+    // Base payload
+    const payload = {
+      request_number: nextRequestNumber,
+      request_id: requestId,
+      user_type: userType,
+      guest_name: userType === "guest" ? formData.guest_name : null,
+      gender: formData.gender,
+      student_or_faculty_id: userType !== "guest" ? formData.id : null,
+      contact_no: userType !== "guest" ? formData.contact_no : null,
+      section: userType === "student" ? formData.section : null,
+      concern: formData.concern,
+      description: formData.description,
+      email: formData.email,
+      attachment_url: attachmentUrls,
+    };
+
+    // ✅ ONLY add this if consultation
+    if (formData.concern === "Consultation") {
+      payload.consultation_date = formData.consultationDate;
+    }
+
+    const { error } = await supabase.from("requests").insert([payload]);
+
+    if (error) throw error;
+
+    Swal.fire({
+      icon: "success",
+      title: "Request Submitted",
+      html: `Your request has been successfully submitted.<br>ID: ${requestId}`,
+    });
+
+    setCurrentRequestId(requestId);
+    setShowSurvey(true);
+
+    // Reset
+    setFormData({
+      guest_name: "",
+      gender: "",
+      id: "",
+      contact_no: "",
+      section: "",
+      concern: CONCERNS[0],
+      description: "",
+      email: "",
+      consultationDate: "",
+    });
+
+    setAttachments([]);
+  } catch (error) {
+    console.error("Submit failed:", error);
+
+    Swal.fire({
+      icon: "error",
+      title: "Submission Failed",
+      text: error.message || "Something went wrong.",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center font-sans bg-gray-100 p-4">
