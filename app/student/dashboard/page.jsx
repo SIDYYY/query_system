@@ -30,6 +30,7 @@ export default function Home() {
     description: "",
     email: "",
     rating: 0,
+    consultationDate: "",
   });
 
   const [attachments, setAttachments] = useState([]);
@@ -69,6 +70,11 @@ export default function Home() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    if (formData.concern === "Consultation" && !formData.consultationDate) {
+      alert("Please select a consultation date.");
+      return;
+}
 
     try {
       // 1️⃣ Get last request number from Supabase
@@ -118,6 +124,7 @@ export default function Home() {
           description: formData.description,
           email: formData.email,
           attachment_url: attachmentUrls,
+          consultation_date : formData.consultationDate,
         },
       ]);
 
@@ -142,6 +149,7 @@ export default function Home() {
         concern: CONCERNS[0],
         description: "",
         email: "",
+        consultationDate: "",
       });
       setAttachments([]);
     } catch (error) {
@@ -251,6 +259,21 @@ export default function Home() {
           value={formData.description}
           onChange={handleChange}
         />
+        
+        {formData.concern === "Consultation" && (
+          <>
+            <label className="block mb-1 font-medium text-gray-800">
+              Select Consultation Date
+            </label>
+            <input
+              type="date"
+              name="consultationDate"
+              value={formData.consultationDate}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+          </>
+        )}
 
         {/* Camera Input */}
         {/* <div>
@@ -275,7 +298,7 @@ export default function Home() {
           <input
             ref={galleryInputRef}
             type="file"
-            accept="image/*"
+            accept="*"
             multiple
             onChange={handleGallery}
             className="w-full text-gray-700"
@@ -284,26 +307,36 @@ export default function Home() {
 
         {/* Preview */}
         {attachments.length > 0 && (
-          <div className="flex gap-2 flex-wrap mt-2">
-            {attachments.map((file, index) => (
+        <div className="flex gap-2 flex-wrap mt-2 box-border">
+          {attachments.map((file, index) => {
+            const isImage = file.type.startsWith("image/");
+
+            return (
               <div key={`${file.name}-${index}`} className="relative">
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt="preview"
-                  className="w-20 h-20 object-cover rounded"
-                />
+                {isImage ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt="preview"
+                    className="w-20 h-20 object-cover rounded"
+                  />
+                ) : (
+                  <div className="h-10 p-5 text-wrap flex items-center justify-center bg-gray-200 rounded text-xs text-gray-800  text-center ">
+                    📄 {file.name}
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => removeAttachment(index)}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-sm leading-none flex items-center justify-center"
-                  aria-label="Remove attachment"
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-sm flex items-center justify-center"
                 >
                   ×
                 </button>
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
+      )}
 
         <Input
           label="Email"

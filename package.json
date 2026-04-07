@@ -11,10 +11,12 @@
   "dependencies": {
     "@sendinblue/client": "^3.3.1",
     "@supabase/supabase-js": "^2.99.1",
+    "chart.js": "^4.5.1",
     "framer-motion": "^12.36.0",
     "next": "16.1.6",
     "nodemailer": "^8.0.4",
     "react": "^19.2.3",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.3",
     "sweetalert2": "^11.26.22"
   },
