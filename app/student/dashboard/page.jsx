@@ -183,14 +183,31 @@ const handleSubmit = async (e) => {
 };
 
   return (
-    <div className="flex min-h-screen items-center justify-center font-sans bg-gray-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-4"
+      <div
+        className="relative flex flex-col min-h-screen items-center justify-center p-4 bg-cover bg-center"
+        style={{ backgroundImage: "url(/assets/BG-CITC.jpg)" }}
       >
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-4">
-          Submit Concern
-        </h1>
+        {/* DARK OVERLAY */}
+        <div className="absolute inset-0 bg-black/70 z-0"></div>
+
+        {/* FORM (ABOVE OVERLAY) */}
+        <form
+          onSubmit={handleSubmit}
+          className="relative z-10 bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-4"
+        >
+        
+        <div className="flex items-center justify-center mb-5">
+
+          <h1 className="text-2xl font-bold text-gray-900">
+            Submit Concern
+          </h1>
+
+          <img 
+            src="/assets/onlyLogo.png" 
+            alt="Logo" 
+            className="w-12 h-10 mr-2"
+          />
+        </div>
 
         {/* USER TYPE */}
         <div className="flex justify-center gap-4 mb-4">
@@ -371,14 +388,30 @@ const handleSubmit = async (e) => {
         >
           {loading ? "Submitting..." : "Submit"}
         </button>
+
+        <p className="mt-4 text-sm text-gray-700">
+          If you’re having trouble or need further assistance, you can also contact us at{" "}
+          <a
+            href="mailto:citc@ustp.edu.ph"
+            className="text-blue-600 underline"
+          >
+            citc@ustp.edu.ph
+          </a>
+          .
+        </p>
       </form>
+
 
       {showSurvey && (
   <SatisfactionSurvey
     onClose={() => setShowSurvey(false)}
       />
     )}
-    </div>
+    <div className="relative z-10 mt-6 text-center text-xs text-gray-200">
+        © 2026 CITC Dean’s Office Query System <br />
+        Created by Carl Patrick Daguinotas (Student Intern)
+      </div>
+          </div>
   );
 }
 

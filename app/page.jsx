@@ -24,9 +24,13 @@ async function verifyAdmin() {
 }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-white p-4">
+    <div
+        className="relative flex min-h-screen items-center justify-center p-4 bg-cover bg-center"
+        style={{ backgroundImage: "url(/assets/BG-CITC.jpg)" }}
+      >
+        <div className="absolute inset-0 bg-black/70"></div>
 
-      <div className="bg-white/70 backdrop-blur-md rounded-3xl p-10 max-w-md w-full text-center shadow-2xl border-2 border-[#fab414]">
+        <div className="relative bg-white/70 backdrop-blur-md rounded-3xl p-10 max-w-md w-full text-center shadow-2xl border-2 border-[#fab414]">
 
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Dean's Office Query System

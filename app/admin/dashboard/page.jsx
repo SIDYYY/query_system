@@ -36,7 +36,7 @@ export default function Dashboard() {
   const [selectedName, setSelectedName] = useState("");
   const [previewFile, setPreviewFile] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // PWEDE RANI MA CHANGE SA PREFER PAGES SHOWN
+  const itemsPerPage = 5; // PWEDE RANI MA CHANGE SA PREFER PAGES SHOWN
   const [pieModal, setPieModal] = useState(false);
 
   // Count Pending and Released
@@ -405,9 +405,19 @@ function downloadReport() {
       <div className="flex justify-between">
       <div className="gap-3 mb-8">
 
-      <div className="">
-      <h1 className="text-gray-800 text-4xl font-bold mb-5"> Dean's System Query v1</h1>
-      </div>
+      <div className="flex items-center justify-center">
+
+          <h1 className="text-4xl font-bold text-gray-900">
+            Dean's Query System v1
+          </h1>
+          <img 
+            src="/assets/onlyLogo.png" 
+            alt="Logo" 
+            className="w-15 h-13 mr-2"
+          />
+        </div>
+      <small>by - Carl Patrick Daguinotas</small>
+
       </div>
       <div>
         <button
