@@ -218,7 +218,8 @@ function downloadReport() {
       .from("requests")
       .select(`
         *
-      `);
+      `)
+        .order("created_at", { ascending: false });
 
     if (error) {
       console.error(error);
@@ -431,9 +432,17 @@ function downloadReport() {
 
   <div className="flex flex-col lg:flex-row gap-6 justify-center items-start">
 
+<div>
+    <h3 className="text-sm text-gray-500">Total Released</h3>
+    <h2 className="text-2xl font-semibold">{totalReleased}</h2>
+    <h3 className="text-sm text-gray-500 mt-4">Total Pending</h3>w
+      <h2 className="text-2xl font-semibold">{totalPending}</h2>
 
+  </div>
     <div className="bg-white shadow rounded-xl px-6 py-4 mb-6 text-gray-800">
   <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-6">
+
+  
 
     {/* LEFT: SEARCH + DATE */}
     <div className="flex flex-wrap items-end gap-4">
