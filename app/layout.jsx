@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Dean Query System v1",
   description: "CITC DEANS OFFICE - Query System",
+  icons: {
+    icon: "/onlyLogo.ico",
+  },
 };
 
 export default function RootLayout({ children }) {
