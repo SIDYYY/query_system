@@ -22,6 +22,7 @@ import Pagination from "@/component/adminComponents/pagination";
 import RequestTable from "@/component/adminComponents/requestTable";
 import Header from "@/component/adminComponents/header";
 import FilterBar from "@/component/adminComponents/filter";
+import Swal from "sweetalert2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -36,7 +37,8 @@ export default function Dashboard() {
   closePreview,
 } = useImagePreview();
 
-  const { requests } = useRequests();
+  const [files, setFiles] = useState([]);
+  const { requests, fetchRequests } = useRequests();
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -85,7 +87,7 @@ function closeReply() {
   setReplyMessage("");
 }
 
-async function sendReply() {
+async function sendReply(files) {
   if (!selectedEmail || !replyMessage) {
     alert("Missing email or message");
     return;
@@ -94,25 +96,41 @@ async function sendReply() {
   setSending(true);
 
   try {
+  const formData = new FormData();
+    formData.append("email", selectedEmail);
+    formData.append("message", replyMessage);
+    formData.append("name", selectedName);
+
+    if (files) {
+      files.forEach((file) => {
+        formData.append("files", file);
+      });
+    }
+
     const res = await fetch("/api/reply", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: selectedEmail,
-        message: replyMessage,
-        name: selectedName,
-      }),
+      body: formData,
     });
 
     const data = await res.json();
 
     if (data.success) {
-      alert("Reply sent!");
+      Swal.fire({
+        icon: "success",
+        title: "Sent!",
+        text: "Reply has been successfully sent.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       closeReply();
     } else {
-      alert("Failed to send.");
+      Swal.fire({
+        icon: "error",
+        title: "Failed!",
+        text: "Failed to send reply.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     }
   } catch (err) {
     console.error(err);
@@ -138,7 +156,7 @@ async function sendReply() {
   let negative = 0;
 
   allSurveys.forEach((s) => {
-    breakdown[s.rating]++;
+    breakdown[s.rating]++; 
 
     if (s.rating >= 4) positive++;
     if (s.rating <= 2) negative++;
@@ -221,8 +239,6 @@ function downloadReport() {
       }
     }
 
-
-
   function openSurveySummary() {
   fetchAllSurveys();
   setSurveySummaryModal(true);
@@ -247,7 +263,7 @@ function downloadReport() {
       console.error(error);
       alert("Failed to release request");
     } else {
-      fetchRequests();
+      fetchRequests(); 
     }
   }
 
@@ -311,13 +327,14 @@ function downloadReport() {
       setCurrentPage(1);
     }, [search, startDate, endDate, statusFilter]);
 
+    
   return (
     <div className="min-h-screen bg-gray-50 p-6 sm:p-10 font-sans">
 
  {/*HEADER*/}
   <Header logout={logout} />
 
-  <div className="flex flex-col lg:flex-row gap-6 justify-center items-start items-center">
+  <div className="flex flex-col lg:flex-row gap-6 justify-center items-start">
 
       <FilterBar
         search={search}
@@ -409,6 +426,8 @@ function downloadReport() {
   onClose={closeReply}
   onSend={sendReply}
   sending={sending}
+  files={files}
+  setFiles={setFiles}
 />
 )}
 

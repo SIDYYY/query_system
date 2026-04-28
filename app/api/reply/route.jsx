@@ -1,21 +1,32 @@
 export async function POST(req) {
   try {
-    const { email,name, message } = await req.json();
-    
+    const formData = await req.formData();
+
+    const email = formData.get("email");
+    const name = formData.get("name");
+    const message = formData.get("message");
+    const files = formData.getAll("files");
+
+    let attachments = [];
+
+    for (const file of files) {
+      if (file && file.size > 0) {
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        attachments.push({
+          content: buffer.toString("base64"),
+          name: file.name,
+        });
+      }
+    }
 
     const htmlTemplate = `
-      <div style="font-family: Arial, sans-serif; line-height:1.6;">
+      <div style="font-family: Arial;">
         <p>Hello <strong>${name}</strong>,</p>
-
         <p>${message}</p>
-
         <br/>
-
-        <p>Best regards,</p>
-        <p><strong>CITC Dean's Office</strong></p>
-
-        <hr/>
-        <small>This is an automated response. Please do not reply.</small>
+        <p>Best regards,<br/><strong>CITC Dean's Office</strong></p>
       </div>
     `;
 
@@ -33,10 +44,9 @@ export async function POST(req) {
         to: [{ email }],
         subject: "Dean’s Query System: Submission Update",
         htmlContent: htmlTemplate,
+        attachment: attachments.length ? attachments : undefined,
       }),
     });
-
-
 
     const data = await res.json();
 
