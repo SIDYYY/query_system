@@ -32,7 +32,7 @@ export default function Home() {
     rating: 0,
     consultationDate: "",
   });
-
+  const phoneRegex = /^09\d{9}$/;
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
@@ -79,7 +79,53 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
 
-  // ✅ Manual validation
+    if (userType !== "guest") {
+    if (!phoneRegex.test(formData.contact_no)) {
+      setLoading(false);
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Phone Number",
+        text: "Use valid PH format (09XXXXXXXXX).",
+      });
+      return;
+    }
+  }
+
+    if (userType !== "guest") {
+    if (!formData.id || isNaN(formData.id)) {
+      setLoading(false);
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid ID",
+        text: "Student/Faculty ID must be a number.",
+      });
+      return;
+    }
+  }
+
+  if (userType !== "guest") {
+    if (!formData.contact_no || isNaN(formData.contact_no)) {
+      setLoading(false);
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Contact Number",
+        text: "Contact number must contain numbers only.",
+      });
+      return;
+    }
+  }
+
+   if (!formData.email || !formData.concern || !formData.description) {
+    setLoading(false);
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please complete all required fields before submitting.",
+    });
+    return;
+  }
+
+  // 🔥 CONSULTATION DATE VALIDATION
   if (formData.concern === "Consultation" && !formData.consultationDate) {
     setLoading(false);
     Swal.fire({
@@ -149,7 +195,9 @@ const handleSubmit = async (e) => {
     Swal.fire({
       icon: "success",
       title: "Request Submitted",
-      html: `Your request has been successfully submitted.<br>ID: ${requestId}`,
+      html: `Your request has been successfully submitted.<br><b>ID: ${requestId}</b>`,
+      timer: 2000,
+      showConfirmButton: false,
     });
 
     setCurrentRequestId(requestId);
@@ -175,7 +223,7 @@ const handleSubmit = async (e) => {
     Swal.fire({
       icon: "error",
       title: "Submission Failed",
-      text: error.message || "Something went wrong.",
+      text: error.message || "Something went wrong. Please try again.",
     });
   } finally {
     setLoading(false);

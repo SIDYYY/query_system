@@ -25,7 +25,7 @@ export default function Header({ logout }) {
         </div>
 
         <small className="text-gray-500">
-          by - Carl Patrick Daguinotas
+          by: 2025-2026 BSIT Interns
         </small>
 
       </div>
